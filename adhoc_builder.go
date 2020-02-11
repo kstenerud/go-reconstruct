@@ -14,60 +14,36 @@ const (
 	adhocBuilderStateMapValue
 )
 
+type adhocBuilderContext struct {
+	State  adhocBuilderState
+	List   []interface{}
+	Map    map[interface{}]interface{}
+	MapKey interface{}
+}
+
 // Builds an ad-hoc data type, consisting of data in neutral data format.
 type AdhocBuilder struct {
 	topLevelObject interface{}
-	containerStack []interface{}
-	mapKeyStack    []interface{}
-	currentList    []interface{}
-	currentMap     map[interface{}]interface{}
-	currentMapKey  interface{}
-	state          []adhocBuilderState
+	context        adhocBuilderContext
+	contextStack   []adhocBuilderContext
 }
 
 func (this *AdhocBuilder) getCurrentState() adhocBuilderState {
-	if len(this.state) == 0 {
-		return adhocBuilderStateTopLevel
-	}
-	return this.state[len(this.state)-1]
+	return this.context.State
 }
 
 func (this *AdhocBuilder) changeState(newState adhocBuilderState) {
-	this.state[len(this.state)-1] = newState
+	this.context.State = newState
 }
 
 func (this *AdhocBuilder) stackState(newState adhocBuilderState) {
-	switch this.getCurrentState() {
-	case adhocBuilderStateList:
-		this.containerStack = append(this.containerStack, this.currentList)
-	case adhocBuilderStateMapValue:
-		this.containerStack = append(this.containerStack, this.currentMap)
-	}
-	this.mapKeyStack = append(this.mapKeyStack, this.currentMapKey)
-	this.state = append(this.state, newState)
+	this.contextStack = append(this.contextStack, this.context)
+	this.context.State = newState
 }
 
 func (this *AdhocBuilder) unstackState() {
-	this.state = this.state[:len(this.state)-1]
-	this.currentMapKey = this.mapKeyStack[len(this.mapKeyStack)-1]
-	this.mapKeyStack = this.mapKeyStack[:len(this.mapKeyStack)-1]
-
-	switch this.getCurrentState() {
-	case adhocBuilderStateList:
-		this.currentList = this.containerStack[len(this.containerStack)-1].([]interface{})
-		this.containerStack = this.containerStack[:len(this.containerStack)-1]
-	case adhocBuilderStateMapValue:
-		this.currentMap = this.containerStack[len(this.containerStack)-1].(map[interface{}]interface{})
-		this.containerStack = this.containerStack[:len(this.containerStack)-1]
-	}
-}
-
-func (this *AdhocBuilder) stackContainer(container interface{}) {
-	this.containerStack = append(this.containerStack, container)
-}
-
-func (this *AdhocBuilder) unstackContainer() {
-	this.state = this.state[:len(this.state)-1]
+	this.context = this.contextStack[len(this.contextStack)-1]
+	this.contextStack = this.contextStack[:len(this.contextStack)-1]
 }
 
 func (this *AdhocBuilder) addValue(value interface{}) error {
@@ -75,12 +51,12 @@ func (this *AdhocBuilder) addValue(value interface{}) error {
 	case adhocBuilderStateTopLevel:
 		this.topLevelObject = value
 	case adhocBuilderStateList:
-		this.currentList = append(this.currentList, value)
+		this.context.List = append(this.context.List, value)
 	case adhocBuilderStateMapKey:
-		this.currentMapKey = value
+		this.context.MapKey = value
 		this.changeState(adhocBuilderStateMapValue)
 	case adhocBuilderStateMapValue:
-		this.currentMap[this.currentMapKey] = value
+		this.context.Map[this.context.MapKey] = value
 		this.changeState(adhocBuilderStateMapKey)
 	}
 	return nil
@@ -128,12 +104,12 @@ func (this *AdhocBuilder) OnTime(value time.Time) error {
 
 func (this *AdhocBuilder) OnListBegin() error {
 	this.stackState(adhocBuilderStateList)
-	this.currentList = this.currentList[:0]
+	this.context.List = make([]interface{}, 0)
 	return nil
 }
 
 func (this *AdhocBuilder) OnListEnd() error {
-	v := this.currentList
+	v := this.context.List
 	this.unstackState()
 	this.addValue(v)
 	return nil
@@ -141,12 +117,12 @@ func (this *AdhocBuilder) OnListEnd() error {
 
 func (this *AdhocBuilder) OnMapBegin() error {
 	this.stackState(adhocBuilderStateMapKey)
-	this.currentMap = make(map[interface{}]interface{})
+	this.context.Map = make(map[interface{}]interface{})
 	return nil
 }
 
 func (this *AdhocBuilder) OnMapEnd() error {
-	v := this.currentMap
+	v := this.context.Map
 	this.unstackState()
 	this.addValue(v)
 	return nil

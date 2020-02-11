@@ -64,6 +64,14 @@ func TestRoundtripListsArraysSlices(t *testing.T) {
 	assertRoundTrip(t, []interface{}{"abc", 5000})
 }
 
+func TestRoundtripListList(t *testing.T) {
+	assertRoundTrip(t, []interface{}{
+		1, []interface{}{
+			2,
+		},
+	})
+}
+
 func TestRoundtripMaps(t *testing.T) {
 	assertRoundTrip(t, map[string]int{"test": 1})
 }

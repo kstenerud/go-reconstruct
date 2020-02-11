@@ -201,3 +201,18 @@ func TestAdhocMapMap(t *testing.T) {
 		true: false,
 	})
 }
+
+func TestAdhocListList(t *testing.T) {
+	expectAdhocObject(t, func(builder *AdhocBuilder) {
+		builder.OnListBegin()
+		builder.OnInt(1)
+		builder.OnListBegin()
+		builder.OnInt(2)
+		builder.OnListEnd()
+		builder.OnListEnd()
+	}, []interface{}{
+		1, []interface{}{
+			2,
+		},
+	})
+}
