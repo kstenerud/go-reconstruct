@@ -6,6 +6,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/kstenerud/go-describe"
 	"github.com/kstenerud/go-equivalence"
 )
 
@@ -28,7 +29,7 @@ func assertRoundTrip(t *testing.T, v interface{}) {
 	}
 
 	if !equivalence.IsEquivalent(v, dst) {
-		t.Errorf("Not equal: %v VS %v", v, dst)
+		t.Errorf("Not equal: %v VS %v", describe.Describe(v), describe.Describe(dst))
 	}
 }
 
@@ -54,6 +55,40 @@ func TestRoundtripBasicTypes(t *testing.T) {
 	assertRoundTrip(t, uint64(1))
 	assertRoundTrip(t, float32(1.5))
 	assertRoundTrip(t, float64(-8.1))
+}
+
+type SmallStruct struct {
+	Value int
+}
+
+type PointerStruct struct {
+	PInt      *int
+	PURL      *url.URL
+	PWhatever *interface{}
+	PStruct   *SmallStruct
+}
+
+func TestRoundtripStructWithPointers(t *testing.T) {
+	i := 1
+	u := newURI("http://x.com")
+	var w interface{} = "test"
+	s := SmallStruct{1}
+	v := PointerStruct{&i, u, &w, &s}
+	assertRoundTrip(t, v)
+}
+
+func TestRoundtripNil(t *testing.T) {
+	assertRoundTrip(t, []interface{}{nil})
+	assertRoundTrip(t, map[interface{}]interface{}{1: nil})
+	assertRoundTrip(t, PointerStruct{})
+}
+
+func TestRoundtripTime(t *testing.T) {
+	assertRoundTrip(t, time.Now())
+}
+
+func TestRoundtripURI(t *testing.T) {
+	assertRoundTrip(t, newURI("http://example.com/blah?something=5"))
 }
 
 func TestRoundtripListsArraysSlices(t *testing.T) {

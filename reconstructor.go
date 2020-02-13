@@ -154,98 +154,107 @@ func fillFloat(value float64, dst reflect.Value) float64 {
 
 // For bool, string, []byte, uri, time
 func reconstructIdenticalKind(s reflect.Value, d reflect.Value) {
-	d = getConcreteObject(d)
-	if d.Kind() != s.Kind() {
-		if d.Kind() != reflect.Ptr {
-			panic(fmt.Errorf("%v doesn't have expected kind %v (kind was %v)", s, d.Kind(), s.Kind()))
+	dConcrete := getConcreteObject(d)
+	if dConcrete.Kind() != s.Kind() {
+		if dConcrete.Kind() != reflect.Ptr {
+			panic(fmt.Errorf("%v doesn't have expected kind %v (kind was %v)", s, dConcrete.Kind(), s.Kind()))
 		}
 		if s.CanAddr() {
 			// Copy pointer instead
 			s = s.Addr()
 		} else {
 			// d is a nil pointer, so make a new object to reassign
-			v := reflect.New(d.Type().Elem())
+			v := reflect.New(dConcrete.Type().Elem())
 			v.Elem().Set(s)
 			s = v
 		}
 	}
-	d.Set(s)
+	dConcrete.Set(s)
 	return
 }
 
 func reconstructFloat(s reflect.Value, d reflect.Value) {
-	d = getObjectOrNewInstance(getConcreteObject(d))
+	dConcrete := getObjectOrNewInstance(getConcreteObject(d))
 	sflag := baseTypes[s.Kind()]
 	switch sflag {
 	case baseTypeFloat:
 		v := s.Float()
-		if fillFloat(v, d) != v {
-			panic(fmt.Errorf("%v cannot fit into type %v", v, d.Kind()))
+		if fillFloat(v, dConcrete) != v {
+			panic(fmt.Errorf("%v cannot fit into type %v", v, dConcrete.Kind()))
 		}
+		return
 	case baseTypeInt:
 		v := s.Int()
-		if int64(fillFloat(float64(v), d)) != v {
-			panic(fmt.Errorf("%v cannot fit into type %v", v, d.Kind()))
+		if int64(fillFloat(float64(v), dConcrete)) != v {
+			panic(fmt.Errorf("%v cannot fit into type %v", v, dConcrete.Kind()))
 		}
+		return
 	case baseTypeUint:
 		v := s.Uint()
-		if uint64(fillFloat(float64(v), d)) != v {
-			panic(fmt.Errorf("%v cannot fit into type %v", v, d.Kind()))
+		if uint64(fillFloat(float64(v), dConcrete)) != v {
+			panic(fmt.Errorf("%v cannot fit into type %v", v, dConcrete.Kind()))
 		}
-	default:
-		panic(fmt.Errorf("Type %v is not compatible with type %v", s.Type(), d.Type()))
+		return
 	}
+	panic(fmt.Errorf("Type %v is not compatible with type %v", s.Type(), dConcrete.Type()))
 }
 
 func reconstructInt(s reflect.Value, d reflect.Value) {
-	d = getObjectOrNewInstance(getConcreteObject(d))
+	dConcrete := getObjectOrNewInstance(getConcreteObject(d))
 	sflag := baseTypes[s.Kind()]
 	switch sflag {
 	case baseTypeFloat:
 		v := s.Float()
-		if float64(fillInt(int64(v), d)) != v {
-			panic(fmt.Errorf("%v cannot fit into type %v", v, d.Kind()))
+		if float64(fillInt(int64(v), dConcrete)) != v {
+			panic(fmt.Errorf("%v cannot fit into type %v", v, dConcrete.Kind()))
 		}
+		return
 	case baseTypeInt:
 		v := s.Int()
-		if fillInt(v, d) != v {
-			panic(fmt.Errorf("%v cannot fit into type %v", v, d.Kind()))
+		if fillInt(v, dConcrete) != v {
+			panic(fmt.Errorf("%v cannot fit into type %v", v, dConcrete.Kind()))
 		}
+		return
 	case baseTypeUint:
 		// Note: Not checking for negative bit
 		v := s.Uint()
-		if uint64(fillInt(int64(v), d)) != v {
-			panic(fmt.Errorf("%v cannot fit into type %v", v, d.Kind()))
+		if uint64(fillInt(int64(v), dConcrete)) != v {
+			panic(fmt.Errorf("%v cannot fit into type %v", v, dConcrete.Kind()))
 		}
-	default:
-		panic(fmt.Errorf("Type %v is not compatible with type %v", s.Type(), d.Type()))
+		return
 	}
+	panic(fmt.Errorf("Type %v is not compatible with type %v", s.Type(), dConcrete.Type()))
 }
 
 func reconstructUint(s reflect.Value, d reflect.Value) {
-	d = getObjectOrNewInstance(getConcreteObject(d))
+	dConcrete := getObjectOrNewInstance(getConcreteObject(d))
 	sflag := baseTypes[s.Kind()]
 	switch sflag {
 	case baseTypeFloat:
 		v := s.Float()
-		if float64(fillUint(uint64(v), d)) != v {
-			panic(fmt.Errorf("%v cannot fit into type %v", v, d.Kind()))
+		if float64(fillUint(uint64(v), dConcrete)) != v {
+			panic(fmt.Errorf("%v cannot fit into type %v", v, dConcrete.Kind()))
 		}
+		return
 	case baseTypeInt:
 		// Note: Allowing negative values
 		v := s.Int()
-		if int64(fillUint(uint64(v), d)) != v {
-			panic(fmt.Errorf("%v cannot fit into type %v", v, d.Kind()))
+		if int64(fillUint(uint64(v), dConcrete)) != v {
+			panic(fmt.Errorf("%v cannot fit into type %v", v, dConcrete.Kind()))
 		}
+		return
 	case baseTypeUint:
 		v := s.Uint()
-		if fillUint(v, d) != v {
-			panic(fmt.Errorf("%v cannot fit into type %v", v, d.Kind()))
+		if fillUint(v, dConcrete) != v {
+			panic(fmt.Errorf("%v cannot fit into type %v", v, dConcrete.Kind()))
 		}
-	default:
-		panic(fmt.Errorf("Type %v is not compatible with type %v", s.Type(), d.Type()))
+		return
 	}
-	return
+	panic(fmt.Errorf("Type %v is not compatible with type %v", s.Type(), dConcrete.Type()))
+}
+
+func setToNil(v reflect.Value) {
+	v.Set(reflect.Zero(v.Type()))
 }
 
 func newStructReconstructor(t reflect.Type) objectReconstructor {
@@ -266,7 +275,9 @@ func newStructReconstructor(t reflect.Type) objectReconstructor {
 		d = getObjectOrNewInstance(getConcreteObject(d))
 		for _, elementReconstructor := range elementReconstructors {
 			sValue := s.MapIndex(elementReconstructor.mapKey)
-			if sValue.IsValid() {
+			if sValue.IsNil() {
+				setToNil(d)
+			} else {
 				sValue = getConcreteObject(sValue)
 				dValue := getConcreteObject(d.Field(elementReconstructor.elementIndex))
 				elementReconstructor.reconstructElement(sValue, dValue)
@@ -387,8 +398,10 @@ func generateReconstructorForType(t reflect.Type) (reconstructor objectReconstru
 		reconstructor = newArrayReconstructor(directType)
 	case reflect.Struct:
 		reconstructor = newStructReconstructor(directType)
+	case reflect.Interface:
+		reconstructor = reconstructIdenticalKind
 	default:
-		panic(fmt.Errorf("Cannot generate type reconstructor for type %v", t))
+		panic(fmt.Errorf("Cannot generate type reconstructor for type %v (kind %v, direct kind %v)", t, t.Kind(), directType.Kind()))
 	}
 
 	knownReconstructors[directType] = reconstructor

@@ -203,7 +203,7 @@ func (this *ObjectIterator) addReference(v reflect.Value) (didAddReferenceObject
 
 func (this *ObjectIterator) iterateValue(v reflect.Value) error {
 	if !v.IsValid() {
-		return nil
+		return this.callbacks.OnNil()
 	}
 
 	switch v.Kind() {

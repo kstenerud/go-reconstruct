@@ -8,6 +8,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/kstenerud/go-describe"
 	"github.com/kstenerud/go-equivalence"
 )
 
@@ -166,7 +167,7 @@ func expectReconstructed(t *testing.T, s interface{}, d interface{}, expected in
 	}
 	realD := rd.Interface()
 	if !equivalence.IsEquivalent(realD, realExpected) {
-		t.Errorf("Expected reconstructed %v but got %v", expected, realD)
+		t.Errorf("Expected reconstructed %v but got %v", describe.Describe(expected), describe.Describe(realD))
 	}
 }
 
@@ -548,4 +549,25 @@ func TestReconstructUIntPFloat(t *testing.T) {
 	var d *float64
 	expected := 1
 	expectReconstructed(t, s, &d, expected)
+}
+
+type RInner struct {
+	Number int
+}
+
+type ROuter struct {
+	PInner *RInner
+}
+
+func TestReconstructSubObject(t *testing.T) {
+	PanicOnError = true
+	src := map[interface{}]interface{}{
+		"PInner": map[interface{}]interface{}{
+			"Number": 50,
+		},
+	}
+	dst := ROuter{}
+	expectedInner := RInner{50}
+	expected := ROuter{&expectedInner}
+	expectReconstructed(t, src, &dst, expected)
 }

@@ -4,6 +4,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/kstenerud/go-describe"
 	"github.com/kstenerud/go-equivalence"
 )
 
@@ -12,7 +13,7 @@ func expectAdhocObject(t *testing.T, function func(*AdhocBuilder), expected inte
 	function(builder)
 	actual := builder.GetObject()
 	if !equivalence.IsEquivalent(actual, expected) {
-		t.Errorf("Expected %v but got %v", expected, actual)
+		t.Errorf("Expected %v but got %v", describe.Describe(expected), describe.Describe(actual))
 	}
 }
 
