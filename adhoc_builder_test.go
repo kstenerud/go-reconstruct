@@ -74,7 +74,7 @@ func TestAdhocTime(t *testing.T) {
 func TestAdhocListEmpty(t *testing.T) {
 	expectAdhocObject(t, func(builder *AdhocBuilder) {
 		builder.OnListBegin()
-		builder.OnListEnd()
+		builder.OnContainerEnd()
 	}, []interface{}{})
 }
 
@@ -82,8 +82,8 @@ func TestAdhocListListEmpty(t *testing.T) {
 	expectAdhocObject(t, func(builder *AdhocBuilder) {
 		builder.OnListBegin()
 		builder.OnListBegin()
-		builder.OnListEnd()
-		builder.OnListEnd()
+		builder.OnContainerEnd()
+		builder.OnContainerEnd()
 	}, []interface{}{[]interface{}{}})
 }
 
@@ -93,14 +93,14 @@ func TestAdhocList(t *testing.T) {
 		builder.OnBool(false)
 		builder.OnInt(1)
 		builder.OnString("blah")
-		builder.OnListEnd()
+		builder.OnContainerEnd()
 	}, []interface{}{false, 1, "blah"})
 }
 
 func TestAdhocMapEmpty(t *testing.T) {
 	expectAdhocObject(t, func(builder *AdhocBuilder) {
 		builder.OnMapBegin()
-		builder.OnMapEnd()
+		builder.OnContainerEnd()
 	}, map[interface{}]interface{}{})
 }
 
@@ -109,8 +109,8 @@ func TestAdhocMapMapEmpty(t *testing.T) {
 		builder.OnMapBegin()
 		builder.OnBool(true)
 		builder.OnMapBegin()
-		builder.OnMapEnd()
-		builder.OnMapEnd()
+		builder.OnContainerEnd()
+		builder.OnContainerEnd()
 	}, map[interface{}]interface{}{true: map[interface{}]interface{}{}})
 }
 
@@ -121,7 +121,7 @@ func TestAdhocMap(t *testing.T) {
 		builder.OnInt(-50)
 		builder.OnFloat(1.5)
 		builder.OnString("value")
-		builder.OnMapEnd()
+		builder.OnContainerEnd()
 	}, map[interface{}]interface{}{"key1": -50, 1.5: "value"})
 }
 
@@ -137,10 +137,10 @@ func TestAdhocListMap(t *testing.T) {
 		builder.OnInt(-50)
 		builder.OnFloat(1.5)
 		builder.OnString("value")
-		builder.OnMapEnd()
+		builder.OnContainerEnd()
 
 		builder.OnBool(true)
-		builder.OnListEnd()
+		builder.OnContainerEnd()
 	}, []interface{}{
 		false,
 		1,
@@ -162,11 +162,11 @@ func TestAdhocMapList(t *testing.T) {
 		builder.OnListBegin()
 		builder.OnFloat(1.1)
 		builder.OnBool(false)
-		builder.OnListEnd()
+		builder.OnContainerEnd()
 
 		builder.OnInt(100)
 		builder.OnInt(200)
-		builder.OnMapEnd()
+		builder.OnContainerEnd()
 	}, map[interface{}]interface{}{
 		"key1": -50,
 		1.5:    "value",
@@ -188,12 +188,12 @@ func TestAdhocMapMap(t *testing.T) {
 		builder.OnMapBegin()
 		builder.OnFloat(1.5)
 		builder.OnString("value")
-		builder.OnMapEnd()
+		builder.OnContainerEnd()
 
 		builder.OnBool(true)
 		builder.OnBool(false)
 
-		builder.OnMapEnd()
+		builder.OnContainerEnd()
 	}, map[interface{}]interface{}{
 		"key1": -50,
 		"the map": map[interface{}]interface{}{
@@ -209,8 +209,8 @@ func TestAdhocListList(t *testing.T) {
 		builder.OnInt(1)
 		builder.OnListBegin()
 		builder.OnInt(2)
-		builder.OnListEnd()
-		builder.OnListEnd()
+		builder.OnContainerEnd()
+		builder.OnContainerEnd()
 	}, []interface{}{
 		1, []interface{}{
 			2,

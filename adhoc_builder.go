@@ -108,21 +108,17 @@ func (this *AdhocBuilder) OnListBegin() error {
 	return nil
 }
 
-func (this *AdhocBuilder) OnListEnd() error {
-	v := this.context.List
-	this.unstackState()
-	this.addValue(v)
-	return nil
-}
-
 func (this *AdhocBuilder) OnMapBegin() error {
 	this.stackState(adhocBuilderStateMapKey)
 	this.context.Map = make(map[interface{}]interface{})
 	return nil
 }
 
-func (this *AdhocBuilder) OnMapEnd() error {
-	v := this.context.Map
+func (this *AdhocBuilder) OnContainerEnd() error {
+	var v interface{} = this.context.Map
+	if this.getCurrentState() == adhocBuilderStateList {
+		v = this.context.List
+	}
 	this.unstackState()
 	this.addValue(v)
 	return nil

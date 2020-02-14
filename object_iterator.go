@@ -20,9 +20,8 @@ type ObjectIteratorCallbacks interface {
 	OnURI(value *url.URL) error
 	OnTime(value time.Time) error
 	OnListBegin() error
-	OnListEnd() error
 	OnMapBegin() error
-	OnMapEnd() error
+	OnContainerEnd() error
 	// TODO: Marker and reference
 	OnMarker(name uint64) error
 	OnReference(name uint64) error
@@ -128,7 +127,7 @@ func (this *ObjectIterator) iterateSliceOrArray(v reflect.Value) (err error) {
 			return
 		}
 	}
-	if err = this.callbacks.OnListEnd(); err != nil {
+	if err = this.callbacks.OnContainerEnd(); err != nil {
 		return
 	}
 	return
@@ -149,7 +148,7 @@ func (this *ObjectIterator) iterateMap(value reflect.Value) (err error) {
 		}
 	}
 
-	if err = this.callbacks.OnMapEnd(); err != nil {
+	if err = this.callbacks.OnContainerEnd(); err != nil {
 		return
 	}
 
@@ -176,7 +175,7 @@ func (this *ObjectIterator) iterateStruct(v reflect.Value) (err error) {
 		this.iterateValue(v.Field(i))
 	}
 
-	if err = this.callbacks.OnMapEnd(); err != nil {
+	if err = this.callbacks.OnContainerEnd(); err != nil {
 		return
 	}
 
@@ -227,7 +226,7 @@ func (this *ObjectIterator) iterateValue(v reflect.Value) error {
 		if err := this.callbacks.OnFloat(imag(cv)); err != nil {
 			return err
 		}
-		return this.callbacks.OnListEnd()
+		return this.callbacks.OnContainerEnd()
 	case reflect.String:
 		return this.callbacks.OnString(v.String())
 	case reflect.Array:
