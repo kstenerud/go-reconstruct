@@ -16,6 +16,7 @@ func (this *RootObjectIterator) Init(useReferences bool, callbacks ObjectIterato
 }
 
 func (this *RootObjectIterator) Iterate(value interface{}) error {
+	this.findReferences(value)
 	rv := reflect.ValueOf(value)
 	iterator := getIteratorForType(rv.Type())
 	iterator = iterator.CloneFromTemplate(this)
@@ -32,65 +33,10 @@ type RootObjectIterator struct {
 	useReferences   bool
 }
 
-// ----------
-// References
-// ----------
-
-func (this *RootObjectIterator) checkReferenceExists(value reflect.Value) (alreadyExists bool) {
-	if _, ok := this.foundReferences[value]; ok {
-		this.foundReferences[value] = true
-		return true
-	}
-
-	this.foundReferences[value] = false
-	return false
-}
-
-func (this *RootObjectIterator) findReferencesInValue(value reflect.Value) {
-	if !value.IsValid() {
-		return
-	}
-
-	switch value.Kind() {
-	case reflect.Interface:
-		this.findReferencesInValue(value.Elem())
-	case reflect.Ptr:
-		if !this.checkReferenceExists(value) {
-			this.findReferencesInValue(value.Elem())
-		}
-	case reflect.Map:
-		if !this.checkReferenceExists(value) {
-			iter := value.MapRange()
-			for iter.Next() {
-				this.findReferencesInValue(iter.Key())
-				this.findReferencesInValue(iter.Value())
-			}
-		}
-	case reflect.Slice:
-		if !this.checkReferenceExists(value) {
-			count := value.Len()
-			for i := 0; i < count; i++ {
-				this.findReferencesInValue(value.Index(i))
-			}
-		}
-	case reflect.Array:
-		count := value.Len()
-		for i := 0; i < count; i++ {
-			this.findReferencesInValue(value.Index(i))
-		}
-	case reflect.Struct:
-		count := value.NumField()
-		for i := 0; i < count; i++ {
-			this.findReferencesInValue(value.Field(i))
-		}
-	}
-}
-
-func (this *RootObjectIterator) findReferences(value reflect.Value) {
+func (this *RootObjectIterator) findReferences(value interface{}) {
 	if this.useReferences {
-		this.foundReferences = make(map[reflect.Value]bool)
+		this.foundReferences = FindDuplicatePointers(value)
 		this.namedReferences = make(map[reflect.Value]uint32)
-		this.findReferencesInValue(value)
 	}
 }
 
