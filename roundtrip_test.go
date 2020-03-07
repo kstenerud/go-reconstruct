@@ -1,3 +1,5 @@
+// +build disabled
+
 package reconstruct
 
 import (
@@ -135,5 +137,5 @@ func TestRoundtripDeepMapList2(t *testing.T) {
 }
 
 func TestRoundtripTestStruct(t *testing.T) {
-	assertRoundTrip(t, newTestStruct(1))
+	assertRoundTrip(t, newReconstructorTestStruct(1))
 }

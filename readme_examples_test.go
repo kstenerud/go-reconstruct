@@ -1,3 +1,5 @@
+// +build disabled
+
 package reconstruct
 
 import (
@@ -49,9 +51,4 @@ func TestReadmeExamples(t *testing.T) {
 	if err := deconstructAndReconstruct(value); err != nil {
 		t.Error(err)
 	}
-
-	// Prints:
-	// Deconstructing &{Example 50 map[a:{0.5} b:{0.25} c:{0.75}]}
-	// Resulting ad-hoc object: map[InnerStructsByName:map[a:map[Proportion:0.5] b:map[Proportion:0.25] c:map[Proportion:0.75]] Name:Example Number:50]
-	// Reconstructed object: &{Example 50 map[a:{0.5} b:{0.25} c:{0.75}]}
 }
