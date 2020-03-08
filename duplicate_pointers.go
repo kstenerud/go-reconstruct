@@ -8,10 +8,10 @@ import (
 // multiple times, marking slice, map, or pointer members that point to the same
 // instance of an object.
 //
-// The returned map has boolean true entries for every reflect.Value that is a
-// duplicate pointer. Values that are not duplicates will either not be present
-// in the map, or will have a false value. Either way, fetching will return
-// false if the key is not a duplicate pointer.
+// The returned map has boolean true values mapped to every duplicate pointer.
+// Non-duplicates will either not be present in the map, or will have a false
+// value. Either way, foundPtrs[myPointer] will return false if myPointer is not
+// a duplicate pointer.
 func FindDuplicatePointers(value interface{}) (foundPtrs map[uintptr]bool) {
 	foundPtrs = make(map[uintptr]bool)
 	findDuplicatePtrsInValue(reflect.ValueOf(value), foundPtrs)
