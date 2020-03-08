@@ -3,6 +3,7 @@ package reconstruct
 import (
 	"fmt"
 	"net/url"
+	"strings"
 	"testing"
 	"time"
 )
@@ -193,16 +194,48 @@ type SomeStruct struct {
 	RandomValues []interface{}
 }
 
-func Demonstrate() {
-	v := &SomeStruct{
-		Name: "My name",
+func describeDuplicates(duplicates map[TypedPointer]bool) string {
+	str := strings.Builder{}
+	isFirst := true
+	for ptr, isDup := range duplicates {
+		if isDup {
+			if !isFirst {
+				str.WriteString(", ")
+			}
+			isFirst = false
+			str.WriteString(fmt.Sprintf("%v", ptr))
+		}
 	}
-	fmt.Printf("Basic: %v\n", FindDuplicatePointers(v))
+	return str.String()
+}
+
+func Demonstrate() {
+	v := &SomeStruct{Name: "My name"}
+	fmt.Printf("No duplicates: %v\n", describeDuplicates(FindDuplicatePointers(v)))
+
+	// -----------------------------------
 
 	v.NameAlias = &v.Name
-	fmt.Printf("NameAlias is duplicate: %v\n", FindDuplicatePointers(v))
+	fmt.Printf("NameAlias points to Name: %v\n", describeDuplicates(FindDuplicatePointers(v)))
+
+	// -----------------------------------
+
+	v = &SomeStruct{Name: "My name"}
+	v.NameAlias = &v.Name
 	v.recursive = v
-	fmt.Printf("Recursive ptr: %v\n", FindDuplicatePointers(v))
+	fmt.Printf("NameAlias points to Name and recursive points to self: %v\n", describeDuplicates(FindDuplicatePointers(v)))
+
+	// -----------------------------------
+
+	v = &SomeStruct{Name: "My name"}
+	v.RandomValues = append(v.RandomValues, v)
+	fmt.Printf("RandomValues contains pointer to self: %v\n", describeDuplicates(FindDuplicatePointers(v)))
+
+	// -----------------------------------
+
+	v = &SomeStruct{Name: "My name"}
+	v.RandomValues = append(v.RandomValues, &v.NameAlias)
+	fmt.Printf("RandomValues contains pointer to NameAlias: %v\n", describeDuplicates(FindDuplicatePointers(v)))
 }
 
 func TestDemonstrate(t *testing.T) {
