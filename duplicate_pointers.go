@@ -4,14 +4,15 @@ import (
 	"reflect"
 )
 
-// FindDuplicatePointers looks deep within an object for pointers that are used
-// multiple times, marking slice, map, or pointer members that point to the same
-// instance of an object.
+// FindDuplicatePointers walks an object and its contents looking for pointers
+// that are used multiple times, marking slices, maps, or pointers that point to
+// the same instance of an object. Both exported and unexported members are
+// examined and followed.
 //
-// The returned map has boolean true values mapped to every duplicate pointer.
-// Non-duplicates will either not be present in the map, or will have a false
-// value. Either way, foundPtrs[myPointer] will return false if myPointer is not
-// a duplicate pointer.
+// The returned foundPtrs will map to true for every duplicate pointer found.
+// Non-duplicates will either not be present in the map, or will map to false.
+// Either way, foundPtrs[myPointer] will return false if myPointer is not a
+// duplicate pointer.
 func FindDuplicatePointers(value interface{}) (foundPtrs map[uintptr]bool) {
 	foundPtrs = make(map[uintptr]bool)
 	findDuplicatePtrsInValue(reflect.ValueOf(value), foundPtrs)
