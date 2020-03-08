@@ -2,6 +2,8 @@ package reconstruct
 
 import (
 	"reflect"
+
+	"github.com/kstenerud/go-duplicates"
 )
 
 func NewRootObjectIterator(useReferences bool, callbacks ObjectIteratorCallbacks) *RootObjectIterator {
@@ -26,8 +28,8 @@ func (this *RootObjectIterator) Iterate(value interface{}) error {
 // Iterates depth-first recursively through an object, notifying callbacks as it
 // encounters data.
 type RootObjectIterator struct {
-	foundReferences map[TypedPointer]bool
-	namedReferences map[TypedPointer]uint32
+	foundReferences map[duplicates.TypedPointer]bool
+	namedReferences map[duplicates.TypedPointer]uint32
 	nextMarkerName  uint32
 	callbacks       ObjectIteratorCallbacks
 	useReferences   bool
@@ -35,14 +37,14 @@ type RootObjectIterator struct {
 
 func (this *RootObjectIterator) findReferences(value interface{}) {
 	if this.useReferences {
-		this.foundReferences = FindDuplicatePointers(value)
-		this.namedReferences = make(map[TypedPointer]uint32)
+		this.foundReferences = duplicates.FindDuplicatePointers(value)
+		this.namedReferences = make(map[duplicates.TypedPointer]uint32)
 	}
 }
 
 func (this *RootObjectIterator) addReference(v reflect.Value) (didAddReferenceObject bool) {
 	if this.useReferences {
-		ptr := TypedPointerOf(v)
+		ptr := duplicates.TypedPointerOf(v)
 		if this.foundReferences[ptr] {
 			var name uint32
 			var exists bool
