@@ -96,6 +96,8 @@ func generateIteratorForType(t reflect.Type) ObjectIterator {
 		return newUintIterator()
 	case reflect.Float32, reflect.Float64:
 		return newFloatIterator()
+	case reflect.Complex64, reflect.Complex128:
+		panic("TODO: Complex")
 	case reflect.Interface:
 		return newInterfaceIterator(t)
 	case reflect.Array:
@@ -127,7 +129,6 @@ func generateIteratorForType(t reflect.Type) ObjectIterator {
 			return newPointerIterator(t)
 		}
 	default:
-		// TODO: Complex
 		panic(fmt.Errorf("BUG: Unhandled type %v", t))
 	}
 }
