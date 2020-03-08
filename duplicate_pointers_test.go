@@ -3,12 +3,11 @@ package reconstruct
 import (
 	"fmt"
 	"net/url"
-	"reflect"
 	"testing"
 	"time"
 )
 
-func mapDifference(a, b map[uintptr]bool) (difference []uintptr) {
+func mapDifference(a, b map[TypedPointer]bool) (difference []TypedPointer) {
 	for k, _ := range a {
 		if _, ok := b[k]; !ok {
 			difference = append(difference, k)
@@ -18,12 +17,12 @@ func mapDifference(a, b map[uintptr]bool) (difference []uintptr) {
 }
 
 func assertDuplicates(t *testing.T, value interface{}, expectedDuplicates ...interface{}) {
-	expected := make(map[uintptr]bool)
+	expected := make(map[TypedPointer]bool)
 	for _, dup := range expectedDuplicates {
-		expected[reflect.ValueOf(dup).Pointer()] = true
+		expected[TypedPointerOf(dup)] = true
 	}
 
-	actual := make(map[uintptr]bool)
+	actual := make(map[TypedPointer]bool)
 	for dup, found := range FindDuplicatePointers(value) {
 		if found {
 			actual[dup] = true
@@ -202,7 +201,6 @@ func Demonstrate() {
 
 	v.NameAlias = &v.Name
 	fmt.Printf("NameAlias is duplicate: %v\n", FindDuplicatePointers(v))
-	v.NameAlias = nil
 	v.recursive = v
 	fmt.Printf("Recursive ptr: %v\n", FindDuplicatePointers(v))
 }

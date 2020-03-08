@@ -26,8 +26,8 @@ func (this *RootObjectIterator) Iterate(value interface{}) error {
 // Iterates depth-first recursively through an object, notifying callbacks as it
 // encounters data.
 type RootObjectIterator struct {
-	foundReferences map[uintptr]bool
-	namedReferences map[uintptr]uint32
+	foundReferences map[TypedPointer]bool
+	namedReferences map[TypedPointer]uint32
 	nextMarkerName  uint32
 	callbacks       ObjectIteratorCallbacks
 	useReferences   bool
@@ -36,13 +36,13 @@ type RootObjectIterator struct {
 func (this *RootObjectIterator) findReferences(value interface{}) {
 	if this.useReferences {
 		this.foundReferences = FindDuplicatePointers(value)
-		this.namedReferences = make(map[uintptr]uint32)
+		this.namedReferences = make(map[TypedPointer]uint32)
 	}
 }
 
 func (this *RootObjectIterator) addReference(v reflect.Value) (didAddReferenceObject bool) {
 	if this.useReferences {
-		ptr := v.Pointer()
+		ptr := TypedPointerOf(v)
 		if this.foundReferences[ptr] {
 			var name uint32
 			var exists bool

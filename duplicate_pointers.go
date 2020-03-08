@@ -2,25 +2,36 @@ package reconstruct
 
 import (
 	"reflect"
-	"sync"
 )
+
+// TypedPointer is a pointer value with an associated type. This is necessary
+// because the first field of a struct will have the same address as the struct
+// itself
+type TypedPointer struct {
+	Type    reflect.Type
+	Pointer uintptr
+}
+
+func TypedPointerOf(v interface{}) TypedPointer {
+	return typedPointerOfRV(reflect.ValueOf(v))
+}
 
 // FindDuplicatePointers walks an object and its contents looking for pointers
 // that are used multiple times, marking slices, maps, or pointers that point to
 // the same instance of an object. Both exported and unexported members are
 // examined and followed.
 //
-// The returned foundPtrs will map to true for every duplicate pointer found.
+// The returned duplicatePtrs will map to true for every duplicate pointer found.
 // Non-duplicates will either not be present in the map, or will map to false.
-// Either way, foundPtrs[myValue] will return false if myValue doesn't represent
-// a duplicate pointer.
-func FindDuplicatePointers(value interface{}) (foundPtrs map[uintptr]bool) {
-	foundPtrs = make(map[uintptr]bool)
-	findDuplicatePtrsInValue(reflect.ValueOf(value), foundPtrs)
+// Either way, foundPtrs[myTypedPtr] will return false if myTypedPtr doesn't
+// represent a duplicate pointer.
+func FindDuplicatePointers(value interface{}) (duplicatePtrs map[TypedPointer]bool) {
+	duplicatePtrs = make(map[TypedPointer]bool)
+	findDuplicatePtrsInValue(reflect.ValueOf(value), duplicatePtrs)
 	return
 }
 
-func findDuplicatePtrsInValue(value reflect.Value, foundPtrs map[uintptr]bool) {
+func findDuplicatePtrsInValue(value reflect.Value, foundPtrs map[TypedPointer]bool) {
 	switch value.Kind() {
 	case reflect.Interface:
 		if !value.IsNil() {
@@ -61,8 +72,13 @@ func findDuplicatePtrsInValue(value reflect.Value, foundPtrs map[uintptr]bool) {
 			}
 		}
 	case reflect.Struct:
-		for _, index := range getSearchableFieldIndices(value.Type()) {
-			findDuplicatePtrsInValue(value.Field(index), foundPtrs)
+		for i := 0; i < value.NumField(); i++ {
+			field := value.Field(i)
+			if field.CanAddr() {
+				findDuplicatePtrsInValue(field.Addr(), foundPtrs)
+			} else if isSearchableKind(field.Kind()) {
+				findDuplicatePtrsInValue(field, foundPtrs)
+			}
 		}
 	}
 }
@@ -78,30 +94,8 @@ func isSearchableKind(kind reflect.Kind) bool {
 	return searchableKinds&(uint(1)<<kind) != 0
 }
 
-var searchableFieldIndices sync.Map
-
-func getSearchableFieldIndices(structType reflect.Type) (searchableIndices []int) {
-	if indices, ok := searchableFieldIndices.Load(structType); ok {
-		return indices.([]int)
-	}
-
-	indices, _ := searchableFieldIndices.LoadOrStore(structType, generateSearchableFieldIndices(structType))
-	return indices.([]int)
-}
-
-func generateSearchableFieldIndices(structType reflect.Type) (searchableIndices []int) {
-	numFields := structType.NumField()
-	for i := 0; i < numFields; i++ {
-		field := structType.Field(i)
-		if isSearchableKind(field.Type.Kind()) {
-			searchableIndices = append(searchableIndices, i)
-		}
-	}
-	return
-}
-
-func checkPtrAlreadyFound(value reflect.Value, foundPtrs map[uintptr]bool) (alreadyExists bool) {
-	ptr := value.Pointer()
+func checkPtrAlreadyFound(value reflect.Value, foundPtrs map[TypedPointer]bool) (alreadyExists bool) {
+	ptr := typedPointerOfRV(value)
 	if _, ok := foundPtrs[ptr]; ok {
 		foundPtrs[ptr] = true
 		return true
@@ -109,4 +103,11 @@ func checkPtrAlreadyFound(value reflect.Value, foundPtrs map[uintptr]bool) (alre
 
 	foundPtrs[ptr] = false
 	return false
+}
+
+func typedPointerOfRV(rv reflect.Value) TypedPointer {
+	return TypedPointer{
+		Type:    rv.Type(),
+		Pointer: rv.Pointer(),
+	}
 }
