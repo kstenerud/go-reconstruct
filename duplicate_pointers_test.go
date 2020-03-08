@@ -1,6 +1,7 @@
 package reconstruct
 
 import (
+	"fmt"
 	"net/url"
 	"reflect"
 	"testing"
@@ -184,4 +185,28 @@ func TestDuplicatesStruct5(t *testing.T) {
 	v.e = &v
 
 	assertDuplicates(t, &v, &v)
+}
+
+type SomeStruct struct {
+	Name         string
+	NameAlias    *string
+	recursive    *SomeStruct
+	RandomValues []interface{}
+}
+
+func Demonstrate() {
+	v := &SomeStruct{
+		Name: "My name",
+	}
+	fmt.Printf("Basic: %v\n", FindDuplicatePointers(v))
+
+	v.NameAlias = &v.Name
+	fmt.Printf("NameAlias is duplicate: %v\n", FindDuplicatePointers(v))
+	v.NameAlias = nil
+	v.recursive = v
+	fmt.Printf("Recursive ptr: %v\n", FindDuplicatePointers(v))
+}
+
+func TestDemonstrate(t *testing.T) {
+	Demonstrate()
 }
