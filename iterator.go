@@ -16,6 +16,7 @@ type ObjectIteratorCallbacks interface {
 	OnInt(value int64) error
 	OnUint(value uint64) error
 	OnFloat(value float64) error
+	OnComplex(value complex128) error
 	OnString(value string) error
 	OnBytes(value []byte) error
 	OnURI(value *url.URL) error
@@ -97,7 +98,7 @@ func generateIteratorForType(t reflect.Type) ObjectIterator {
 	case reflect.Float32, reflect.Float64:
 		return newFloatIterator()
 	case reflect.Complex64, reflect.Complex128:
-		panic("TODO: Complex")
+		return newComplexIterator()
 	case reflect.Interface:
 		return newInterfaceIterator(t)
 	case reflect.Array:

@@ -127,6 +127,10 @@ func (this *RootBuilder) OnFloat(value float64) error {
 	this.Float(value, this.object)
 	return nil
 }
+func (this *RootBuilder) OnComplex(value complex128) error {
+	panic("TODO")
+	return nil
+}
 func (this *RootBuilder) OnString(value string) error {
 	this.String(value, this.object)
 	return nil

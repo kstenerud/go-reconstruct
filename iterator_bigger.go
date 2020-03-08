@@ -122,17 +122,7 @@ func (this *complexIterator) CloneFromTemplate(root *RootObjectIterator) ObjectI
 }
 
 func (this *complexIterator) Iterate(v reflect.Value) error {
-	cv := v.Complex()
-	if err := this.root.callbacks.OnListBegin(); err != nil {
-		return err
-	}
-	if err := this.root.callbacks.OnFloat(real(cv)); err != nil {
-		return err
-	}
-	if err := this.root.callbacks.OnFloat(imag(cv)); err != nil {
-		return err
-	}
-	return this.root.callbacks.OnContainerEnd()
+	return this.root.callbacks.OnComplex(v.Complex())
 }
 
 // -----
@@ -267,7 +257,7 @@ func (this *mapIterator) Iterate(v reflect.Value) (err error) {
 		return
 	}
 
-	iter := v.MapRange()
+	iter := mapRange(v)
 	for iter.Next() {
 		if err = this.keyIter.Iterate(iter.Key()); err != nil {
 			return

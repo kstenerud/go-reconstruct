@@ -44,7 +44,7 @@ func (this *RootObjectIterator) findReferences(value interface{}) {
 
 func (this *RootObjectIterator) addReference(v reflect.Value) (didAddReferenceObject bool) {
 	if this.useReferences {
-		ptr := duplicates.TypedPointerOf(v)
+		ptr := duplicates.TypedPointerOfRV(v)
 		if this.foundReferences[ptr] {
 			var name uint32
 			var exists bool
