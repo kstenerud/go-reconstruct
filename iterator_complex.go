@@ -286,12 +286,14 @@ func (this *mapIterator) Iterate(v reflect.Value) (err error) {
 
 type structIteratorField struct {
 	Name     string
+	Index    int
 	Iterator ObjectIterator
 }
 
-func newStructIteratorField(name string, iterator ObjectIterator) *structIteratorField {
+func newStructIteratorField(name string, index int, iterator ObjectIterator) *structIteratorField {
 	return &structIteratorField{
 		Name:     name,
+		Index:    index,
 		Iterator: iterator,
 	}
 }
@@ -311,11 +313,10 @@ func newStructIterator(srcType reflect.Type) ObjectIterator {
 func (this *structIterator) PostCacheInitIterator() {
 	for i := 0; i < this.srcType.NumField(); i++ {
 		field := this.srcType.Field(i)
-		if !isFieldExported(field.Name) {
-			this.fieldIterators = append(this.fieldIterators, nil)
-		} else {
+		if isFieldExported(field.Name) {
 			iterator := &structIteratorField{
 				Name:     field.Name,
+				Index:    i,
 				Iterator: getIteratorForType(field.Type),
 			}
 			this.fieldIterators = append(this.fieldIterators, iterator)
@@ -330,7 +331,7 @@ func (this *structIterator) CloneFromTemplate(root *RootObjectIterator) ObjectIt
 	}
 	that.fieldIterators = make([]*structIteratorField, 0, len(this.fieldIterators))
 	for _, iter := range this.fieldIterators {
-		that.fieldIterators = append(that.fieldIterators, newStructIteratorField(iter.Name, iter.Iterator.CloneFromTemplate(root)))
+		that.fieldIterators = append(that.fieldIterators, newStructIteratorField(iter.Name, iter.Index, iter.Iterator.CloneFromTemplate(root)))
 	}
 	return that
 }
@@ -340,11 +341,9 @@ func (this *structIterator) Iterate(v reflect.Value) (err error) {
 		return
 	}
 
-	for i, iter := range this.fieldIterators {
-		if iter != nil {
-			this.root.callbacks.OnString(iter.Name)
-			iter.Iterator.Iterate(v.Field(i))
-		}
+	for _, iter := range this.fieldIterators {
+		this.root.callbacks.OnString(iter.Name)
+		iter.Iterator.Iterate(v.Field(iter.Index))
 	}
 
 	return this.root.callbacks.OnContainerEnd()

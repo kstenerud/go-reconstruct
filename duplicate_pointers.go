@@ -18,8 +18,19 @@ func FindDuplicatePointers(value interface{}) (foundPtrs map[reflect.Value]bool)
 	return
 }
 
+func isSearchableKind(kind reflect.Kind) bool {
+	const searchableKinds uint = (uint(1) << reflect.Interface) |
+		(uint(1) << reflect.Ptr) |
+		(uint(1) << reflect.Slice) |
+		(uint(1) << reflect.Map) |
+		(uint(1) << reflect.Array) |
+		(uint(1) << reflect.Struct)
+
+	return searchableKinds&(uint(1)<<kind) != 0
+}
+
 func findDuplicatePtrsInValue(value reflect.Value, foundPtrs map[reflect.Value]bool) {
-	if !value.IsValid() {
+	if !isSearchableKind(value.Kind()) {
 		return
 	}
 
@@ -32,25 +43,31 @@ func findDuplicatePtrsInValue(value reflect.Value, foundPtrs map[reflect.Value]b
 		}
 	case reflect.Map:
 		if !checkPtrAlreadyFound(value, foundPtrs) {
-			iter := value.MapRange()
-			for iter.Next() {
-				findDuplicatePtrsInValue(iter.Key(), foundPtrs)
-				findDuplicatePtrsInValue(iter.Value(), foundPtrs)
+			if isSearchableKind(value.Type().Elem().Kind()) {
+				iter := value.MapRange()
+				for iter.Next() {
+					findDuplicatePtrsInValue(iter.Value(), foundPtrs)
+				}
 			}
 		}
 	case reflect.Slice:
 		if !checkPtrAlreadyFound(value, foundPtrs) {
+			if isSearchableKind(value.Type().Elem().Kind()) {
+				count := value.Len()
+				for i := 0; i < count; i++ {
+					findDuplicatePtrsInValue(value.Index(i), foundPtrs)
+				}
+			}
+		}
+	case reflect.Array:
+		if isSearchableKind(value.Type().Elem().Kind()) {
 			count := value.Len()
 			for i := 0; i < count; i++ {
 				findDuplicatePtrsInValue(value.Index(i), foundPtrs)
 			}
 		}
-	case reflect.Array:
-		count := value.Len()
-		for i := 0; i < count; i++ {
-			findDuplicatePtrsInValue(value.Index(i), foundPtrs)
-		}
 	case reflect.Struct:
+		// TODO: How to eliminate non-searchable fields?
 		count := value.NumField()
 		for i := 0; i < count; i++ {
 			findDuplicatePtrsInValue(value.Field(i), foundPtrs)

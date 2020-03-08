@@ -47,32 +47,33 @@ type IterateBuildInnerStruct struct {
 }
 
 type IterateBuildTester struct {
-	Bo    bool
-	By    byte
-	I     int
-	I8    int8
-	I16   int16
-	I32   int32
-	I64   int64
-	U     uint
-	U8    uint8
-	U16   uint16
-	U32   uint32
-	U64   uint64
-	F32   float32
-	F64   float64
-	Ar    [4]byte
-	St    string
-	Ba    []byte
-	Sl    []interface{}
-	M     map[interface{}]interface{}
-	Pi    *int
-	IS    IterateBuildInnerStruct
-	ISP   *IterateBuildInnerStruct
-	Time  time.Time
-	URL   url.URL
-	PTime *time.Time
-	PURL  *url.URL
+	unexported int
+	Bo         bool
+	By         byte
+	I          int
+	I8         int8
+	I16        int16
+	I32        int32
+	I64        int64
+	U          uint
+	U8         uint8
+	U16        uint16
+	U32        uint32
+	U64        uint64
+	F32        float32
+	F64        float64
+	Ar         [4]byte
+	St         string
+	Ba         []byte
+	Sl         []interface{}
+	M          map[interface{}]interface{}
+	Pi         *int
+	IS         IterateBuildInnerStruct
+	ISP        *IterateBuildInnerStruct
+	Time       time.Time
+	URL        url.URL
+	PTime      *time.Time
+	PURL       *url.URL
 }
 
 func newIterateBuildTestStruct(baseValue int) *IterateBuildTester {
