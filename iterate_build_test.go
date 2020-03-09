@@ -42,6 +42,83 @@ func TestIterateBuildBasic(t *testing.T) {
 	assertIterateBuild(t, []int{1, 2, 3})
 }
 
+type SmallStruct struct {
+	Value int
+}
+
+type PointerStruct struct {
+	PInt      *int
+	PURL      *url.URL
+	PWhatever *interface{}
+	PStruct   *SmallStruct
+}
+
+func TestRoundtripStructWithPointers(t *testing.T) {
+	i := 1
+	u := newURI("http://x.com")
+	var w interface{} = "test"
+	s := SmallStruct{1}
+	v := PointerStruct{&i, u, &w, &s}
+	assertIterateBuild(t, v)
+}
+
+func TestRoundtripNil(t *testing.T) {
+	assertIterateBuild(t, []interface{}{nil})
+	assertIterateBuild(t, map[interface{}]interface{}{1: nil})
+	assertIterateBuild(t, PointerStruct{})
+}
+
+func TestRoundtripTime(t *testing.T) {
+	assertIterateBuild(t, time.Now())
+}
+
+func TestRoundtripURI(t *testing.T) {
+	assertIterateBuild(t, newURI("http://example.com/blah?something=5"))
+}
+
+func TestRoundtripListsArraysSlices(t *testing.T) {
+	assertIterateBuild(t, "testing")
+	assertIterateBuild(t, []byte{1, 2, 3, 4})
+	assertIterateBuild(t, []int{5, 6, 7, 8})
+	assertIterateBuild(t, []string{"abc", "def"})
+	assertIterateBuild(t, []interface{}{"abc", 5000})
+}
+
+func TestRoundtripListList(t *testing.T) {
+	assertIterateBuild(t, []interface{}{
+		1, []interface{}{
+			2,
+		},
+	})
+}
+
+func TestRoundtripMaps(t *testing.T) {
+	assertIterateBuild(t, map[string]int{"test": 1})
+}
+
+func TestRoundtripStructs(t *testing.T) {
+	assertIterateBuild(t, time.Now())
+	assertIterateBuild(t, newURI("http://nowhere.com"))
+}
+
+func TestRoundtripDeepMapList(t *testing.T) {
+	assertIterateBuild(t, map[string]interface{}{
+		"aaa":  1,
+		"blah": map[interface{}]interface{}{1.5: "x"},
+	})
+}
+
+func TestRoundtripDeepMapList2(t *testing.T) {
+	assertIterateBuild(t, map[string]interface{}{
+		"test": 1,
+		"inner": []interface{}{
+			1, 2, "blah", map[interface{}]interface{}{
+				1.5: "x",
+			},
+		},
+	})
+}
+
 type IterateBuildInnerStruct struct {
 	Inner int
 }

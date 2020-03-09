@@ -4,54 +4,29 @@ Reconstruct
 Package reconstruct provides basic tools for deconstructing and reconstructing
 data to/from go objects (structs, lists, maps, strings, scalars, etc). It's
 expected to be used in tandem with other packages that provide serialization
-or generation of data structures in a neutral format (interface slices and
-interface maps). This package provides the "last mile" to deconstruct or
-reconstruct objects based on data in this neutral format.
+or generation of data structures. This package provides the "last mile" to
+deconstruct or reconstruct objects based on the following data events:
 
-Neutral format data is data consisting of only the following types, and
-combinations thereof:
-
-- bool
-- int (any size)
-- uint (any size)
-- float (any size)
-- string
-- []byte
-- time.Time
-- *url.URL
-- []interface{}
-- map[interface{}]interface{}
-
-These provide the fundamental types required for deconstruction and
-reconstruction of all types and structs in go.
+ * Nil
+ * Bool
+ * Int
+ * Uint
+ * Float
+ * String
+ * Bytes
+ * URI
+ * Time
+ * List
+ * Map
+ * End
+ * Marker
+ * Reference
 
 
 Usage
 -----
 
 ```golang
-func deconstructAndReconstruct(value interface{}) error {
-	fmt.Printf("Deconstructing %v\n", value)
-	// Build an ad-hoc object from value
-	builder := new(AdhocBuilder)
-	iterator := NewObjectIterator(builder)
-	if err := iterator.Iterate(value); err != nil {
-		return err
-	}
-	adhocObject := builder.GetObject()
-	fmt.Printf("Resulting ad-hoc object: %v\n", adhocObject)
-
-	// Create a new pointer-to-object of type v and fill it from the ad-hoc object.
-	// You could also use a concrete object.
-	pointer := reflect.New(reflect.TypeOf(value))
-	dst := pointer.Interface()
-	if err := Reconstruct(adhocObject, dst); err != nil {
-		return err
-	}
-	fmt.Printf("Reconstructed object: %v\n", pointer.Elem())
-	return nil
-}
-
 type ExampleInnerStruct struct {
 	Proportion float32
 }
@@ -62,7 +37,7 @@ type ExampleStruct struct {
 	InnerStructsByName map[string]ExampleInnerStruct
 }
 
-func TestReadmeExamples(t *testing.T) {
+func Demonstrate() {
 	value := new(ExampleStruct)
 	value.Name = "Example"
 	value.Number = 50
@@ -70,15 +45,25 @@ func TestReadmeExamples(t *testing.T) {
 	value.InnerStructsByName["a"] = ExampleInnerStruct{0.5}
 	value.InnerStructsByName["b"] = ExampleInnerStruct{0.25}
 	value.InnerStructsByName["c"] = ExampleInnerStruct{0.75}
-	if err := deconstructAndReconstruct(value); err != nil {
-		t.Error(err)
+
+	fmt.Printf("Connecting iterator and builder to deconstruct and reconstruct %v\n", describe.Describe(value, 4))
+
+	builder := reconstruct.NewBuilderFor(value)
+	useReferences := false
+	if err := reconstruct.IterateObject(value, useReferences, builder); err != nil {
+		// TODO: Handle this
 	}
 
-	// Prints:
-	// Deconstructing &{Example 50 map[a:{0.5} b:{0.25} c:{0.75}]}
-	// Resulting ad-hoc object: map[InnerStructsByName:map[a:map[Proportion:0.5] b:map[Proportion:0.25] c:map[Proportion:0.75]] Name:Example Number:50]
-	// Reconstructed object: &{Example 50 map[a:{0.5} b:{0.25} c:{0.75}]}
+	rebuilt := builder.GetBuiltObject()
+
+	fmt.Printf("Reconstructed object: %v\n", describe.Describe(rebuilt, 4))
 }
+```
+
+#### Output:
+
+```
+TODO
 ```
 
 
@@ -89,8 +74,19 @@ MIT License:
 
 Copyright 2020 Karl Stenerud
 
-Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation files (the "Software"), to deal in the Software without restriction, including without limitation the rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the Software, and to permit persons to whom the Software is furnished to do so, subject to the following conditions:
+Permission is hereby granted, free of charge, to any person obtaining a copy of
+this software and associated documentation files (the "Software"), to deal in
+the Software without restriction, including without limitation the rights to
+use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of
+the Software, and to permit persons to whom the Software is furnished to do so,
+subject to the following conditions:
 
-The above copyright notice and this permission notice shall be included in all copies or substantial portions of the Software.
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
 
-THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS
+FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR
+COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER
+IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
+CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
