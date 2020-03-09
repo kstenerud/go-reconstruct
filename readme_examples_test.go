@@ -26,7 +26,7 @@ func Demonstrate() {
 	value.InnerStructsByName["b"] = ExampleInnerStruct{0.25}
 	value.InnerStructsByName["c"] = ExampleInnerStruct{0.75}
 
-	fmt.Printf("Connecting iterator and builder to deconstruct and reconstruct %v\n", describe.Describe(value, 4))
+	fmt.Printf("Connecting iterator and builder to deconstruct and reconstruct:\n%v\n\n", describe.Describe(value, 4))
 
 	builder := NewBuilderFor(value)
 	useReferences := false
@@ -36,7 +36,7 @@ func Demonstrate() {
 
 	rebuilt := builder.GetBuiltObject()
 
-	fmt.Printf("Reconstructed object: %v\n", describe.Describe(rebuilt, 4))
+	fmt.Printf("Reconstructed object:\n%v\n", describe.Describe(rebuilt, 4))
 }
 
 func TestReadmeExamples(t *testing.T) {

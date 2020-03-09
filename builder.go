@@ -11,7 +11,11 @@ import (
 // NewBuilderFor creates a new builder that builds objects of the same type as
 // the template object.
 func NewBuilderFor(template interface{}) *RootBuilder {
-	return newRootBuilder(reflect.TypeOf(template))
+	rv := reflect.ValueOf(template)
+	for rv.Kind() == reflect.Ptr {
+		rv = rv.Elem()
+	}
+	return newRootBuilder(rv.Type())
 }
 
 // ObjectBuilder responds to external events to progressively build an object.

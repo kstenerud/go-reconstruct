@@ -7,8 +7,17 @@ import (
 )
 
 func (this *RootBuilder) GetBuiltObject() interface{} {
-	if this.object.IsValid() && this.object.CanInterface() {
-		return this.object.Interface()
+	// TODO: Verify this behavior
+	if this.object.IsValid() {
+		v := this.object
+		switch v.Kind() {
+		case reflect.Struct, reflect.Array:
+			return v.Addr().Interface()
+		default:
+			if this.object.CanInterface() {
+				return this.object.Interface()
+			}
+		}
 	}
 	return nil
 }

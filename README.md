@@ -5,7 +5,8 @@ Package reconstruct provides basic tools for deconstructing and reconstructing
 data to/from go objects (structs, lists, maps, strings, scalars, etc). It's
 expected to be used in tandem with other packages that provide serialization
 or generation of data structures. This package provides the "last mile" to
-deconstruct or reconstruct objects based on the following data events:
+deconstruct or reconstruct objects based on a template type, and the following
+data events:
 
  * Nil
  * Bool
@@ -46,7 +47,7 @@ func Demonstrate() {
 	value.InnerStructsByName["b"] = ExampleInnerStruct{0.25}
 	value.InnerStructsByName["c"] = ExampleInnerStruct{0.75}
 
-	fmt.Printf("Connecting iterator and builder to deconstruct and reconstruct %v\n", describe.Describe(value, 4))
+	fmt.Printf("Connecting iterator and builder to deconstruct and reconstruct:\n%v\n\n", describe.Describe(value, 4))
 
 	builder := reconstruct.NewBuilderFor(value)
 	useReferences := false
@@ -56,14 +57,46 @@ func Demonstrate() {
 
 	rebuilt := builder.GetBuiltObject()
 
-	fmt.Printf("Reconstructed object: %v\n", describe.Describe(rebuilt, 4))
+	fmt.Printf("Reconstructed object:\n%v\n", describe.Describe(rebuilt, 4))
 }
 ```
 
 #### Output:
 
 ```
-TODO
+Connecting iterator and builder to deconstruct and reconstruct:
+*reconstruct.ExampleStruct<
+    Name = "Example"
+    Number = 50
+    InnerStructsByName = string:reconstruct.ExampleInnerStruct{
+        "a" = reconstruct.ExampleInnerStruct<
+            Proportion = 0.5
+        >
+        "b" = reconstruct.ExampleInnerStruct<
+            Proportion = 0.25
+        >
+        "c" = reconstruct.ExampleInnerStruct<
+            Proportion = 0.75
+        >
+    }
+>
+
+Reconstructed object:
+*reconstruct.ExampleStruct<
+    Name = "Example"
+    Number = 50
+    InnerStructsByName = string:reconstruct.ExampleInnerStruct{
+        "b" = reconstruct.ExampleInnerStruct<
+            Proportion = 0.25
+        >
+        "c" = reconstruct.ExampleInnerStruct<
+            Proportion = 0.75
+        >
+        "a" = reconstruct.ExampleInnerStruct<
+            Proportion = 0.5
+        >
+    }
+>
 ```
 
 
